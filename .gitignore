@@ -1,0 +1,23 @@
+# Папки сборки и отладки
+bin/
+obj/
+
+# Файлы пользовательских настроек Visual Studio
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Папка с настройками IDE
+.vs/
+
+# Файлы ReSharper
+_ReSharper.*
+*.resharper
+
+# Файлы NuGet пакетов
+packages/
+
+# Журналы и временные файлы
+*.log
+*.tmp
