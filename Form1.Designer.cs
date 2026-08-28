@@ -32,7 +32,7 @@
             TextHeight = new TextBox();
             TextThickness = new TextBox();
             TextHoleDiameter = new TextBox();
-            CheckHasHole = new CheckBox();
+            CheckBoxHasHole = new CheckBox();
             LabelLength = new Label();
             LabelHeight = new Label();
             LabelThickness = new Label();
@@ -43,7 +43,7 @@
             // 
             // TextLength
             // 
-            TextLength.Location = new Point(115, 54);
+            TextLength.Location = new Point(115, 53);
             TextLength.Name = "TextLength";
             TextLength.Size = new Size(100, 23);
             TextLength.TabIndex = 0;
@@ -55,15 +55,13 @@
             TextHeight.Name = "TextHeight";
             TextHeight.Size = new Size(100, 23);
             TextHeight.TabIndex = 1;
-            TextHeight.TextChanged += TextHeight_TextChanged;
             // 
             // TextThickness
             // 
-            TextThickness.Location = new Point(115, 96);
+            TextThickness.Location = new Point(115, 99);
             TextThickness.Name = "TextThickness";
             TextThickness.Size = new Size(100, 23);
             TextThickness.TabIndex = 2;
-            TextThickness.TextChanged += TextThickness_TextChanged;
             // 
             // TextHoleDiameter
             // 
@@ -72,17 +70,16 @@
             TextHoleDiameter.Name = "TextHoleDiameter";
             TextHoleDiameter.Size = new Size(100, 23);
             TextHoleDiameter.TabIndex = 3;
-            TextHoleDiameter.TextChanged += TextHoleDiameter_TextChanged;
             // 
-            // CheckHasHole
+            // CheckBoxHasHole
             // 
-            CheckHasHole.AutoSize = true;
-            CheckHasHole.Location = new Point(454, 58);
-            CheckHasHole.Name = "CheckHasHole";
-            CheckHasHole.Size = new Size(15, 14);
-            CheckHasHole.TabIndex = 4;
-            CheckHasHole.UseVisualStyleBackColor = true;
-            CheckHasHole.CheckedChanged += CheckBoxHasHole_CheckedChanged;
+            CheckBoxHasHole.AutoSize = true;
+            CheckBoxHasHole.Location = new Point(454, 58);
+            CheckBoxHasHole.Name = "CheckBoxHasHole";
+            CheckBoxHasHole.Size = new Size(15, 14);
+            CheckBoxHasHole.TabIndex = 4;
+            CheckBoxHasHole.UseVisualStyleBackColor = true;
+            CheckBoxHasHole.CheckedChanged += CheckBoxHasHole_CheckedChanged;
             // 
             // LabelLength
             // 
@@ -92,7 +89,6 @@
             LabelLength.Size = new Size(45, 15);
             LabelLength.TabIndex = 5;
             LabelLength.Text = "Длина:";
-            LabelLength.Click += LabelLength_Click;
             // 
             // LabelHeight
             // 
@@ -102,37 +98,34 @@
             LabelHeight.Size = new Size(50, 15);
             LabelHeight.TabIndex = 6;
             LabelHeight.Text = "Высота:";
-            LabelHeight.Click += LabelHeight_Click;
             // 
             // LabelThickness
             // 
             LabelThickness.AutoSize = true;
-            LabelThickness.Location = new Point(47, 99);
+            LabelThickness.Location = new Point(47, 102);
             LabelThickness.Name = "LabelThickness";
             LabelThickness.Size = new Size(62, 15);
             LabelThickness.TabIndex = 7;
             LabelThickness.Text = "Толщина:";
-            LabelThickness.Click += LabelThickness_Click;
             // 
             // LabelHoleDiameter
             // 
             LabelHoleDiameter.AutoSize = true;
             LabelHoleDiameter.Location = new Point(326, 99);
             LabelHoleDiameter.Name = "LabelHoleDiameter";
-            LabelHoleDiameter.Size = new Size(122, 15);
+            LabelHoleDiameter.Size = new Size(116, 15);
             LabelHoleDiameter.TabIndex = 8;
-            LabelHoleDiameter.Text = "Диаметра отверстия:";
+            LabelHoleDiameter.Text = "Диаметр отверстия:";
             LabelHoleDiameter.Click += LabelHoleDiameter_Click;
             // 
             // LabelHasHole
             // 
             LabelHasHole.AutoSize = true;
-            LabelHasHole.Location = new Point(331, 56);
+            LabelHasHole.Location = new Point(326, 56);
             LabelHasHole.Name = "LabelHasHole";
             LabelHasHole.Size = new Size(117, 15);
             LabelHasHole.TabIndex = 9;
             LabelHasHole.Text = "Наличие отверстия:";
-            LabelHasHole.Click += LabelHasHole_Click;
             // 
             // buttonRun
             // 
@@ -155,14 +148,13 @@
             Controls.Add(LabelThickness);
             Controls.Add(LabelHeight);
             Controls.Add(LabelLength);
-            Controls.Add(CheckHasHole);
+            Controls.Add(CheckBoxHasHole);
             Controls.Add(TextHoleDiameter);
             Controls.Add(TextThickness);
             Controls.Add(TextHeight);
             Controls.Add(TextLength);
             Name = "Form1";
             Text = "Form1";
-            Load += Form1_Load;
             ResumeLayout(false);
             PerformLayout();
         }
@@ -173,7 +165,7 @@
         private TextBox TextHeight;
         private TextBox TextThickness;
         private TextBox TextHoleDiameter;
-        private CheckBox CheckHasHole;
+        private CheckBox CheckBoxHasHole;
         private Label LabelLength;
         private Label LabelHeight;
         private Label LabelThickness;
