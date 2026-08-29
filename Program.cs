@@ -8,19 +8,59 @@ namespace TFlexApp
         [STAThread]
         static void Main()
         {
-            // To customize application configuration such as set high DPI settings or default font,
-            // see https://aka.ms/applicationconfiguration.
+            AppDomain.CurrentDomain.UnhandledException += (sender, e) =>
+            {
+                var ex = e.ExceptionObject as Exception;
+                System.IO.File.AppendAllText("crash.log",
+                    $"[{DateTime.Now}] UnhandledException (IsTerminating={e.IsTerminating}):\n{ex}\n\n");
+                System.Windows.Forms.MessageBox.Show(
+                    "Необработанное исключение:\n\n" + (ex?.ToString() ?? e.ExceptionObject?.ToString() ?? "null"),
+                    "Крах", System.Windows.Forms.MessageBoxButtons.OK, System.Windows.Forms.MessageBoxIcon.Error);
+            };
 
-            // Инициализация визуальных стилей Windows
+            try
+            {
+                APILoader.Initialize();
+                RunApplication();
+            }
+            catch (AccessViolationException ex)
+            {
+                System.IO.File.AppendAllText("crash.log",
+                    $"[{DateTime.Now}] AccessViolationException:\n{ex}\n\n");
+                System.Windows.Forms.MessageBox.Show("AccessViolation (нативный крах T-Flex):\n\n" + ex,
+                    "Крах", System.Windows.Forms.MessageBoxButtons.OK, System.Windows.Forms.MessageBoxIcon.Error);
+            }
+            catch (Exception ex)
+            {
+                System.IO.File.AppendAllText("crash.log",
+                    $"[{DateTime.Now}] {ex.GetType().Name}:\n{ex}\n\n");
+                System.Windows.Forms.MessageBox.Show(ex.ToString(), "Крах",
+                    System.Windows.Forms.MessageBoxButtons.OK, System.Windows.Forms.MessageBoxIcon.Error);
+            }
+        }
+
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
+        private static void RunApplication()
+        {
+            APILoader.InitializeTFlexCADAPI();
+
             ApplicationConfiguration.Initialize();
 
-            // 1. Создаем View (Форму)
+            // 1. Создание View
             var form = new Form1();
+            form.InitializeTFlexControl();
 
-            // 2. Создаем Presenter и передаем ему форму
-            _ = new Presenter(form);
+            // 2. Создаём CadOperations
+            var cadOperations = new CadOperations(form.tfControl!);
 
+            // 3. Создаём презентер
+            _ = new Presenter(form, cadOperations);
+
+            // 4. Запуск приложения
             Application.Run(form);
+
+            // 5. Завершение работы T-Flex CAD API
+            APILoader.Terminate();
         }
     }
 }

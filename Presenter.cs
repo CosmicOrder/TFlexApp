@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Text;
@@ -8,10 +8,12 @@ namespace TFlexApp
     public class Presenter
     {
         private readonly IView _view;
+        private readonly ICadOperations _cad_operations;
 
-        public Presenter(IView view)
+        public Presenter(IView view, ICadOperations cad_operations)
         {
             _view = view ?? throw new ArgumentNullException(nameof(view));
+            _cad_operations = cad_operations ?? throw new ArgumentNullException(nameof(cad_operations));
             // Подписка на событие RunRequested
             _view.RunRequested += OnRun;
         }
@@ -23,7 +25,15 @@ namespace TFlexApp
             {
                 if (model != null)
                 {
-                    _view.ShowSuccess(string.Format(Messages.SuccessBuildMessage, model.Designation, model.PartName), Messages.TitleSuccess);
+                    try
+                    {
+                        _cad_operations.Create3DPart(model);
+                        _view.ShowSuccess(string.Format(Messages.SuccessBuildMessage, model.Designation, model.PartName), Messages.TitleSuccess);
+                    }
+                    catch (Exception ex)
+                    {
+                        _view.ShowError("Ошибка при создании детали: " + ex.Message, Messages.TitleError);
+                    }
                 }
             }
         }

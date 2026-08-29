@@ -5,17 +5,29 @@ namespace TFlexApp
         public Form1()
         {
             InitializeComponent();
-            TextHoleDiameter.Enabled = false; // Отключаем поле ввода диаметра отверстия по умолчанию
+            TextHoleDiameter.Enabled = false;
         }
 
-        #region Неявная реализация интерфейса IFormView
+        public void InitializeTFlexControl()
+        {
+            tfControl = new TFlex.Control();
+            tfControl.Location = new System.Drawing.Point(12, 220);
+            tfControl.Name = "tfControl";
+            tfControl.Size = new System.Drawing.Size(676, 410);
+            tfControl.BackColor = System.Drawing.Color.White;
+            tfControl.ShowPageTabs = true;
+            tfControl.ShowControlButtons = true;
+            Controls.Add(tfControl);
+        }
+
+        #region РќРµСЏРІРЅР°СЏ СЂРµР°Р»РёР·Р°С†РёСЏ РёРЅС‚РµСЂС„РµР№СЃР° IFormView
         public string PartLength => TextLength.Text;
         public string PartHeight => TextHeight.Text;
         public string PartThickness => TextThickness.Text;
         public string HoleDiameter => TextHoleDiameter.Text;
         public bool HasHole => CheckBoxHasHole.Checked;
 
-        // Методы для вывода сообщений пользователю
+        // РњРµС‚РѕРґС‹ РґР»СЏ РІС‹РІРѕРґР° СЃРѕРѕР±С‰РµРЅРёР№ РїРѕР»СЊР·РѕРІР°С‚РµР»СЋ
         public void ShowSuccess(string message, string title)
         {
             MessageBox.Show(message, title, MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -26,23 +38,23 @@ namespace TFlexApp
             MessageBox.Show(errorMessage, title, MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
 
-        // Объявление события RunRequested
+        // РћР±СЉСЏРІР»РµРЅРёРµ СЃРѕР±С‹С‚РёСЏ RunRequested
         public event EventHandler RunRequested = delegate { };
         #endregion
 
-        // Логика блокировки поля диаметра
+        // Р›РѕРіРёРєР° Р±Р»РѕРєРёСЂРѕРІРєРё РїРѕР»СЏ РґРёР°РјРµС‚СЂР°
         private void CheckBoxHasHole_CheckedChanged(object sender, EventArgs e)
         {
             TextHoleDiameter.Enabled = CheckBoxHasHole.Checked;
             if (!CheckBoxHasHole.Checked)
             {
-                TextHoleDiameter.Text = string.Empty; // Очищаем поле ввода диаметра отверстия, если CheckBox не отмечен
+                TextHoleDiameter.Text = string.Empty; // РћС‡РёС‰Р°РµРј РїРѕР»Рµ РІРІРѕРґР° РґРёР°РјРµС‚СЂР° РѕС‚РІРµСЂСЃС‚РёСЏ, РµСЃР»Рё CheckBox РЅРµ РѕС‚РјРµС‡РµРЅ
             }
         }
 
         private void ButtonRun_Click(object sender, EventArgs e)
         {
-            RunRequested.Invoke(this, EventArgs.Empty); // Испускание события RunRequested при нажатии кнопки
+            RunRequested.Invoke(this, EventArgs.Empty); // РСЃРїСѓСЃРєР°РЅРёРµ СЃРѕР±С‹С‚РёСЏ RunRequested РїСЂРё РЅР°Р¶Р°С‚РёРё РєРЅРѕРїРєРё
         }
 
         private void TextLength_TextChanged(object sender, EventArgs e)

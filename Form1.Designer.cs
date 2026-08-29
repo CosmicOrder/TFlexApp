@@ -1,4 +1,4 @@
-﻿namespace TFlexApp
+namespace TFlexApp
 {
     partial class Form1
     {
@@ -43,7 +43,7 @@
             // 
             // TextLength
             // 
-            TextLength.Location = new Point(115, 53);
+            TextLength.Location = new Point(127, 53);
             TextLength.Name = "TextLength";
             TextLength.Size = new Size(100, 23);
             TextLength.TabIndex = 0;
@@ -51,14 +51,14 @@
             // 
             // TextHeight
             // 
-            TextHeight.Location = new Point(115, 76);
+            TextHeight.Location = new Point(127, 76);
             TextHeight.Name = "TextHeight";
             TextHeight.Size = new Size(100, 23);
             TextHeight.TabIndex = 1;
             // 
             // TextThickness
             // 
-            TextThickness.Location = new Point(115, 99);
+            TextThickness.Location = new Point(127, 99);
             TextThickness.Name = "TextThickness";
             TextThickness.Size = new Size(100, 23);
             TextThickness.TabIndex = 2;
@@ -66,7 +66,7 @@
             // TextHoleDiameter
             // 
             TextHoleDiameter.Enabled = false;
-            TextHoleDiameter.Location = new Point(454, 96);
+            TextHoleDiameter.Location = new Point(512, 96);
             TextHoleDiameter.Name = "TextHoleDiameter";
             TextHoleDiameter.Size = new Size(100, 23);
             TextHoleDiameter.TabIndex = 3;
@@ -74,7 +74,7 @@
             // CheckBoxHasHole
             // 
             CheckBoxHasHole.AutoSize = true;
-            CheckBoxHasHole.Location = new Point(454, 58);
+            CheckBoxHasHole.Location = new Point(512, 57);
             CheckBoxHasHole.Name = "CheckBoxHasHole";
             CheckBoxHasHole.Size = new Size(15, 14);
             CheckBoxHasHole.TabIndex = 4;
@@ -84,7 +84,7 @@
             // LabelLength
             // 
             LabelLength.AutoSize = true;
-            LabelLength.Location = new Point(64, 56);
+            LabelLength.Location = new Point(76, 56);
             LabelLength.Name = "LabelLength";
             LabelLength.Size = new Size(45, 15);
             LabelLength.TabIndex = 5;
@@ -93,7 +93,7 @@
             // LabelHeight
             // 
             LabelHeight.AutoSize = true;
-            LabelHeight.Location = new Point(59, 79);
+            LabelHeight.Location = new Point(71, 79);
             LabelHeight.Name = "LabelHeight";
             LabelHeight.Size = new Size(50, 15);
             LabelHeight.TabIndex = 6;
@@ -102,7 +102,7 @@
             // LabelThickness
             // 
             LabelThickness.AutoSize = true;
-            LabelThickness.Location = new Point(47, 102);
+            LabelThickness.Location = new Point(59, 102);
             LabelThickness.Name = "LabelThickness";
             LabelThickness.Size = new Size(62, 15);
             LabelThickness.TabIndex = 7;
@@ -111,7 +111,7 @@
             // LabelHoleDiameter
             // 
             LabelHoleDiameter.AutoSize = true;
-            LabelHoleDiameter.Location = new Point(326, 99);
+            LabelHoleDiameter.Location = new Point(362, 99);
             LabelHoleDiameter.Name = "LabelHoleDiameter";
             LabelHoleDiameter.Size = new Size(116, 15);
             LabelHoleDiameter.TabIndex = 8;
@@ -121,7 +121,7 @@
             // LabelHasHole
             // 
             LabelHasHole.AutoSize = true;
-            LabelHasHole.Location = new Point(326, 56);
+            LabelHasHole.Location = new Point(362, 56);
             LabelHasHole.Name = "LabelHasHole";
             LabelHasHole.Size = new Size(117, 15);
             LabelHasHole.TabIndex = 9;
@@ -129,7 +129,7 @@
             // 
             // buttonRun
             // 
-            buttonRun.Location = new Point(189, 162);
+            buttonRun.Location = new Point(225, 162);
             buttonRun.Name = "buttonRun";
             buttonRun.Size = new Size(217, 37);
             buttonRun.TabIndex = 10;
@@ -141,7 +141,7 @@
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(608, 249);
+            ClientSize = new Size(690, 650);
             Controls.Add(buttonRun);
             Controls.Add(LabelHasHole);
             Controls.Add(LabelHoleDiameter);
@@ -154,7 +154,7 @@
             Controls.Add(TextHeight);
             Controls.Add(TextLength);
             Name = "Form1";
-            Text = "Form1";
+            Text = "Построение детали";
             ResumeLayout(false);
             PerformLayout();
         }
@@ -172,5 +172,6 @@
         private Label LabelHoleDiameter;
         private Label LabelHasHole;
         private Button buttonRun;
+        internal TFlex.Control? tfControl;
     }
 }
