@@ -1,28 +1,38 @@
-using System.Collections.ObjectModel;
 using System.IO;
-using System.Reflection.Metadata;
-using TFlex;
 using TFlex.Model;
 using TFlex.Model.Model2D;
 using TFlex.Model.Model3D;
 
 namespace TFlexApp
 {
-    public class CadOperations : ICadOperations
+    public class CadFacade : ICadFacade
     {
+        //форматка с основной надписью (первый лист, ГОСТ 2.104-68) относительно папки Program
+        private const string StampPath = @"..\Библиотеки\Служебные\Форматки\Конструкторский чертеж. Первый лист. ГОСТ 2.104-68.grb";
+        private const double Margin = 25;  //отступ от границ листа
+        private const double Gap = 20;     //зазор между проекциями
+
         private readonly TFlex.Control _tfControl;
 
-        public CadOperations(TFlex.Control tfControl) => _tfControl = tfControl;
+        public CadFacade(TFlex.Control tfControl) => _tfControl = tfControl;
 
-        public void Create3DPart(Model model)
+        // Создаём документ: 3D-модель, штамп, стандартные проекции
+        public void CreatePartDrawing(Model model)
         {
-            //int openCount = TFlex.Application.Documents.Count();
-            //System.Windows.Forms.MessageBox.Show($"Открыто документов: {openCount}", "Информация",
-            //    System.Windows.Forms.MessageBoxButtons.OK, System.Windows.Forms.MessageBoxIcon.Information);
+            var document = TFlex.Application.NewDocument(true) 
+                ?? throw new InvalidOperationException("Не удалось создать документ T-Flex CAD.");
 
-            var document = TFlex.Application.NewDocument(true) ?? throw new InvalidOperationException("Не удалось создать документ T-Flex CAD.");
+            ThickenExtrusion part = Build3DModel(document, model);
+            Page page = AddStamp(document);
+            AddStandardProjections(document, page, part);
 
-            document.BeginChanges("Операция выталкивания");//Открытие блока изменений документа
+            ShowDocument(document);
+        }
+
+        // Строим 3D-модель: выдавливание прямоугольного профиля с опциональным отверстием
+        private static ThickenExtrusion Build3DModel(TFlex.Model.Document document, Model model)
+        {
+            document.BeginChanges("Операция выталкивания");
 
             //создание узлов (углов прямоугольника)
             FreeNode n1 = new(document, 0, 0);
@@ -50,90 +60,81 @@ namespace TFlexApp
                 ConstructionContourSegment s5 = new(holeContour) { Construction = circle };
             }
 
-            //создание рабочей плоскости (вид слева), на которой будет построен эскиз для выдавливания
+            //рабочая плоскость, на которой строится эскиз для выдавливания
             StandardWorkplane frontPlane = new(document, StandardWorkplane.StandardType.Front);
 
-            //построение профиля для выдавливания на рабочей плоскости
+            //профиль для выдавливания на рабочей плоскости
             AreaProfile areaProfile = new(document) { Area = area, WorkSurface = frontPlane };
 
             //операция выдавливания на заданную толщину
-            ThickenExtrusion part_ext = new(document)
+            ThickenExtrusion part = new(document)
             {
                 LengthType = ThickenExtrusion.LengthValue.AutoValue,
                 ForwardLength = model.Thickness,
             };
-            part_ext.Profile.Add(areaProfile.Geometry.SheetContour);
-            document.EndChanges();
+            part.Profile.Add(areaProfile.Geometry.SheetContour);
 
+            document.EndChanges();
+            return part;
+        }
+
+        // Вставляем форматку с основной надписью и возвращаем страницу чертежа
+        private static Page AddStamp(Document document)
+        {
             document.BeginChanges("Добавление форматки");
             Page page = document.ActivePage;
-
-            //вставляем форматку с основной надписью (первый лист, ГОСТ 2.104-68)
-            string stampPath = Path.Combine("..", "Библиотеки", "Служебные", "Форматки", "Конструкторский чертеж. Первый лист. ГОСТ 2.104-68.grb");
-            Fragment stamp = new(document, stampPath);
+            Fragment stamp = new(document, StampPath);
             document.EndChanges();
-
-            AddStandardProjections(document, page, part_ext);
-
-            //привязываем документ к TFlex.Control для отображения
-            if (_tfControl != null)
-            {
-                _tfControl.Document = document;
-                _tfControl.RefreshTabs();
-                _tfControl.Invalidate(true);
-            }
+            return page;
         }
 
         // Добавляем стандартные проекции на чертеж
-        static void AddStandardProjections(TFlex.Model.Document document, Page page, ThickenExtrusion part_ext)
+        private static void AddStandardProjections(Document document, Page page, ThickenExtrusion part)
         {
-            double margin = 25;  //отступ от границ листа
-            double gap = 20;     //зазор между проекциями
-
             //доступная область листа (лист начинается в 0,0)
             var pageRect = page.Rectangle;
-            double areaWidth = pageRect.Width - 2 * margin;
-            double areaHeight = pageRect.Height - 2 * margin;
+            double areaWidth = pageRect.Width - 2 * Margin;
+            double areaHeight = pageRect.Height - 2 * Margin;
 
-            //бюджет на один вид: два вида по горизонтали и два по вертикали
-            double viewWidth = (areaWidth - gap) / 2;
-            double viewHeight = (areaHeight - gap) / 2;
+            //размер, в который вписывается один вид: два вида по горизонтали и два по вертикали
+            double viewWidth = (areaWidth - Gap) / 2;
+            double viewHeight = (areaHeight - Gap) / 2;
 
             //создаём три проекции в нулевой точке
-            var projectionFront = CreateProjection(document, page, part_ext, ProjectionType.FrontProjection, viewWidth, viewHeight);
-            var projectionLeft = CreateProjection(document, page, part_ext, ProjectionType.LeftProjection, viewWidth, viewHeight);
-            var projectionTop = CreateProjection(document, page, part_ext, ProjectionType.TopProjection, viewWidth, viewHeight);
+            var projectionFront = CreateProjection(document, page, part, ProjectionType.FrontProjection, viewWidth, viewHeight);
+            var projectionLeft = CreateProjection(document, page, part, ProjectionType.LeftProjection, viewWidth, viewHeight);
+            var projectionTop = CreateProjection(document, page, part, ProjectionType.TopProjection, viewWidth, viewHeight);
 
             var frontRect = projectionFront.BoundRect;
             var leftRect = projectionLeft.BoundRect;
             var topRect = projectionTop.BoundRect;
 
             //габариты блока из трёх видов
-            double blockWidth = frontRect.Width + gap + leftRect.Width;
-            double blockHeight = frontRect.Height + gap + topRect.Height;
+            double blockWidth = frontRect.Width + Gap + leftRect.Width;
+            double blockHeight = frontRect.Height + Gap + topRect.Height;
 
             //левый нижний угол блока: центрируем в доступной области
-            double blockX = margin + Math.Max(0, (areaWidth - blockWidth) / 2);
-            double blockY = margin + Math.Max(0, (areaHeight - blockHeight) / 2);
+            double blockX = Margin + Math.Max(0, (areaWidth - blockWidth) / 2);
+            double blockY = Margin + Math.Max(0, (areaHeight - blockHeight) / 2);
 
             //главный вид сверху блока, вид сверху снизу от него (ось Y направлена вверх)
             double frontLeft = blockX;
-            double frontBottom = blockY + topRect.Height + gap;
+            double frontBottom = blockY + topRect.Height + Gap;
 
             document.BeginChanges("Размещение проекций");
             MoveProjection(projectionFront, frontRect, frontLeft, frontBottom);
-            MoveProjection(projectionLeft, leftRect, frontLeft + frontRect.Width + gap, frontBottom);
+            MoveProjection(projectionLeft, leftRect, frontLeft + frontRect.Width + Gap, frontBottom);
             MoveProjection(projectionTop, topRect, frontLeft, blockY);
             document.EndChanges();
         }
 
         // Создаём проекцию заданного типа в нулевой точке привязки и вписываем в заданный размер
         private static SimpleDrawingProjection CreateProjection(TFlex.Model.Document document, Page page,
-            ThickenExtrusion part_ext, ProjectionType viewType, double fitWidth, double fitHeight)
+            ThickenExtrusion part, ProjectionType viewType, double fitWidth, double fitHeight)
         {
             document.BeginChanges($"Добавление проекции {viewType}");
             SimpleDrawingProjection projection = new(document, page);
-            projection.AddOperation(part_ext);
+            projection.AddOperation(part);
             projection.SetViewType(viewType);
             projection.SetTiePoint(0, 0);
             projection.ScaleFitToPageSize(fitWidth, fitHeight);
@@ -149,5 +150,17 @@ namespace TFlexApp
             projection.SetTiePoint(targetLeft - currentRect.Left, targetBottom - currentRect.Bottom);
         }
 
+        // Привязываем документ к TFlex.Control для отображения
+        private void ShowDocument(TFlex.Model.Document document)
+        {
+            if (_tfControl == null)
+            {
+                return;
+            }
+
+            _tfControl.Document = document;
+            _tfControl.RefreshTabs();
+            _tfControl.Invalidate(true);
+        }
     }
 }

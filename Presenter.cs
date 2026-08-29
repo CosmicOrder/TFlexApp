@@ -8,12 +8,12 @@ namespace TFlexApp
     public class Presenter
     {
         private readonly IView _view;
-        private readonly ICadOperations _cad_operations;
+        private readonly ICadFacade _cadFacade;
 
-        public Presenter(IView view, ICadOperations cad_operations)
+        public Presenter(IView view, ICadFacade cadFacade)
         {
             _view = view ?? throw new ArgumentNullException(nameof(view));
-            _cad_operations = cad_operations ?? throw new ArgumentNullException(nameof(cad_operations));
+            _cadFacade = cadFacade ?? throw new ArgumentNullException(nameof(cadFacade));
             // Подписка на событие RunRequested
             _view.RunRequested += OnRun;
         }
@@ -27,7 +27,7 @@ namespace TFlexApp
                 {
                     try
                     {
-                        _cad_operations.Create3DPart(model);
+                        _cadFacade.CreatePartDrawing(model);
                         _view.ShowSuccess(string.Format(Messages.SuccessBuildMessage, model.Designation, model.PartName), Messages.TitleSuccess);
                     }
                     catch (Exception ex)

@@ -50,11 +50,11 @@ namespace TFlexApp
             var form = new Form1();
             form.InitializeTFlexControl();
 
-            // 2. Создаём CadOperations
-            var cadOperations = new CadOperations(form.tfControl!);
+            // 2. Создаём CadFacade
+            var cadFacade = new CadFacade(form.tfControl!);
 
             // 3. Создаём презентер
-            _ = new Presenter(form, cadOperations);
+            _ = new Presenter(form, cadFacade);
 
             // 4. Запуск приложения
             Application.Run(form);
