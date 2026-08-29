@@ -12,6 +12,16 @@ namespace TFlexApp
         private const double Margin = 25;  //отступ от границ листа
         private const double Gap = 20;     //зазор между проекциями
 
+        //ряд масштабов по ГОСТ 2.302-68, от крупного к мелкому
+        private static readonly (double Value, string Text)[] StandardScales =
+        [
+            (100, "100:1"), (50, "50:1"), (40, "40:1"), (20, "20:1"), (10, "10:1"),
+            (5, "5:1"), (4, "4:1"), (2.5, "2.5:1"), (2, "2:1"), (1, "1:1"),
+            (0.5, "1:2"), (0.4, "1:2.5"), (0.25, "1:4"), (0.2, "1:5"), (0.1, "1:10"),
+            (1.0 / 15, "1:15"), (0.05, "1:20"), (0.04, "1:25"), (0.025, "1:40"),
+            (0.02, "1:50"), (1.0 / 75, "1:75"), (0.01, "1:100")
+        ];
+
         private readonly TFlex.Control _tfControl;
 
         public CadFacade(TFlex.Control tfControl) => _tfControl = tfControl;
@@ -23,8 +33,10 @@ namespace TFlexApp
                 ?? throw new InvalidOperationException("Не удалось создать документ T-Flex CAD.");
 
             ThickenExtrusion part = Build3DModel(document, model);
-            Page page = AddStamp(document);
-            AddStandardProjections(document, page, part);
+            Page page = document.ActivePage;
+            Fragment stamp = AddStamp(document, model);
+            string scaleText = AddStandardProjections(document, page, part);
+            SetStampScale(document, stamp, scaleText);
 
             ShowDocument(document);
         }
@@ -78,32 +90,67 @@ namespace TFlexApp
             return part;
         }
 
-        // Вставляем форматку с основной надписью и возвращаем страницу чертежа
-        private static Page AddStamp(Document document)
+        // Вставляем форматку с основной надписью и возвращаем её фрагмент
+        private static Fragment AddStamp(Document document, Model model)
         {
             document.BeginChanges("Добавление форматки");
-            Page page = document.ActivePage;
             Fragment stamp = new(document, StampPath);
+            FillStamp(stamp, model);
             document.EndChanges();
-            return page;
+            return stamp;
         }
 
-        // Добавляем стандартные проекции на чертеж
-        private static void AddStandardProjections(Document document, Page page, ThickenExtrusion part)
+        // Записываем масштаб в основную надпись
+        private static void SetStampScale(Document document, Fragment stamp, string scaleText)
+        {
+            document.BeginChanges("Масштаб в основной надписи");
+            SetStampVariable(stamp, "$maschtab", scaleText);
+            document.EndChanges();
+        }
+
+        // Заполняем основную надпись: обозначение и наименование детали
+        private static void FillStamp(Fragment stamp, Model model)
+        {
+            SetStampVariable(stamp, "$oboznach", model.Designation);
+            SetStampVariable(stamp, "$naimen1", model.PartName);
+        }
+
+        // Присваиваем текстовое значение внешней переменной форматки
+        private static void SetStampVariable(Fragment stamp, string name, string value)
+        {
+            foreach (FragmentVariableValue variable in stamp.GetVariables())
+            {
+                if (string.Equals(variable.Name, name, StringComparison.OrdinalIgnoreCase))
+                {
+                    variable.TextValue = value;
+                    return;
+                }
+            }
+        }
+
+        // Добавляем стандартные проекции на чертеж и возвращаем применённый масштаб
+        private static string AddStandardProjections(Document document, Page page, ThickenExtrusion part)
         {
             //доступная область листа (лист начинается в 0,0)
             var pageRect = page.Rectangle;
             double areaWidth = pageRect.Width - 2 * Margin;
             double areaHeight = pageRect.Height - 2 * Margin;
 
-            //размер, в который вписывается один вид: два вида по горизонтали и два по вертикали
-            double viewWidth = (areaWidth - Gap) / 2;
-            double viewHeight = (areaHeight - Gap) / 2;
+            //создаём три проекции в нулевой точке и в натуральную величину
+            var projectionFront = CreateProjection(document, page, part, ProjectionType.FrontProjection);
+            var projectionLeft = CreateProjection(document, page, part, ProjectionType.LeftProjection);
+            var projectionTop = CreateProjection(document, page, part, ProjectionType.TopProjection);
 
-            //создаём три проекции в нулевой точке
-            var projectionFront = CreateProjection(document, page, part, ProjectionType.FrontProjection, viewWidth, viewHeight);
-            var projectionLeft = CreateProjection(document, page, part, ProjectionType.LeftProjection, viewWidth, viewHeight);
-            var projectionTop = CreateProjection(document, page, part, ProjectionType.TopProjection, viewWidth, viewHeight);
+            //все виды одного чертежа должны быть в едином масштабе
+            double modelWidth = projectionFront.BoundRect.Width + projectionLeft.BoundRect.Width;
+            double modelHeight = projectionFront.BoundRect.Height + projectionTop.BoundRect.Height;
+            var scale = SelectStandardScale(modelWidth, modelHeight, areaWidth - Gap, areaHeight - Gap);
+
+            document.BeginChanges("Масштаб проекций");
+            projectionFront.Scale = scale.Value;
+            projectionLeft.Scale = scale.Value;
+            projectionTop.Scale = scale.Value;
+            document.EndChanges();
 
             var frontRect = projectionFront.BoundRect;
             var leftRect = projectionLeft.BoundRect;
@@ -126,18 +173,35 @@ namespace TFlexApp
             MoveProjection(projectionLeft, leftRect, frontLeft + frontRect.Width + Gap, frontBottom);
             MoveProjection(projectionTop, topRect, frontLeft, blockY);
             document.EndChanges();
+
+            return scale.Text;
         }
 
-        // Создаём проекцию заданного типа в нулевой точке привязки и вписываем в заданный размер
+        // Подбираем крупнейший масштаб из ряда ГОСТ, при котором виды влезают в область
+        private static (double Value, string Text) SelectStandardScale(double modelWidth, double modelHeight,
+            double availableWidth, double availableHeight)
+        {
+            double required = Math.Min(availableWidth / modelWidth, availableHeight / modelHeight);
+
+            foreach (var scale in StandardScales)
+            {
+                if (scale.Value <= required)
+                {
+                    return scale;
+                }
+            }
+            return StandardScales[^1];
+        }
+
+        // Создаём проекцию заданного типа в нулевой точке привязки
         private static SimpleDrawingProjection CreateProjection(TFlex.Model.Document document, Page page,
-            ThickenExtrusion part, ProjectionType viewType, double fitWidth, double fitHeight)
+            ThickenExtrusion part, ProjectionType viewType)
         {
             document.BeginChanges($"Добавление проекции {viewType}");
             SimpleDrawingProjection projection = new(document, page);
             projection.AddOperation(part);
             projection.SetViewType(viewType);
             projection.SetTiePoint(0, 0);
-            projection.ScaleFitToPageSize(fitWidth, fitHeight);
             document.EndChanges();
             return projection;
         }

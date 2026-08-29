@@ -10,6 +10,7 @@ obj/
 
 # Папка с настройками IDE
 .vs/
+.idea
 
 # Файлы ReSharper
 _ReSharper.*
