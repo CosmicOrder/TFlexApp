@@ -11,6 +11,7 @@ namespace TFlexApp
         private const string FirstSheetStampPath = @"..\Библиотеки\Служебные\Форматки\Конструкторский чертеж. Первый лист. ГОСТ 2.104-68.grb";
         private const double Margin = 25;  //отступ от границ листа
         private const double Gap = 20;     //зазор между проекциями
+        private const double DimensionOffset = 10; //отступ линии размера от габарита вида
 
         //ряд масштабов по ГОСТ 2.302-68, от крупного к мелкому
         private static readonly (double Value, string Text)[] StandardScales =
@@ -46,11 +47,13 @@ namespace TFlexApp
             // Добавляем на первый лист стандартные проекции и размеры
             Page page = document.ActivePage;
             var layout = AddStandardProjections(document, page, part);
-            string scaleText = layout.ScaleText;
+
+            // Добавляем размеры
+            AddDimensions(document, page, model, layout);
 
             // Добавляем форматку с основной надписью на первый лист, заполняем её и устанавливаем масштаб
             Fragment firstStamp = AddFirstSheetStamp(document);
-            SetStampScale(document, firstStamp, scaleText);
+            SetStampScale(document, firstStamp, layout.ScaleText);
             FillStamp(document, firstStamp, model);
 
             ShowDocument(document);
@@ -196,6 +199,81 @@ namespace TFlexApp
             //точка привязки была в (0,0), поэтому текущий Left/Bottom — это смещение габаритов от привязки
             projection.SetTiePoint(targetLeft - currentRect.Left, targetBottom - currentRect.Bottom);
         }
+
+        // Ставим размеры от центра габаритного прямоугольника вида: деталь симметрична ему
+        private static void AddDimensions(Document document, Page page, Model model, ProjectionsLayout layout)
+        {
+            document.BeginChanges("Добавление размеров");
+
+            //скрытые узлы только несут размеры и не отображаются
+            Layer nodeLayer = new(document) { Name = "Узлы размеров", Hidden = true };
+            FreeNode Node(double x, double y) => new(document, x, y) { Layer = nodeLayer, Page = page };
+
+            //главный вид: длина сверху
+            var front = PartCorners(layout.FrontRect, model.Length, model.Height, layout.Scale);
+            AddLinearDimension(document, page, Node(front.Left, front.Top), Node(front.Right, front.Top),
+                DimensionAlignType.Horizontal, -DimensionOffset, layout.Scale);
+
+            //вид слева: высота справа
+            var left = PartCorners(layout.LeftRect, model.Thickness, model.Height, layout.Scale);
+            AddLinearDimension(document, page, Node(left.Right, left.Bottom), Node(left.Right, left.Top),
+                DimensionAlignType.Vertical, DimensionOffset, layout.Scale);
+
+            //вид сверху: толщина слева (вертикально)
+            var top = PartCorners(layout.TopRect, model.Length, model.Thickness, layout.Scale);
+            AddLinearDimension(document, page, Node(top.Left, top.Bottom), Node(top.Left, top.Top),
+                DimensionAlignType.Vertical, -DimensionOffset, layout.Scale);
+
+            //диаметр отверстия в центре главного вида
+            if (model.HasHole)
+            {
+                double radius = model.HoleDiameter / 2 * layout.Scale;
+                //видимая окружность для привязки диаметрального размера
+                FreeNode holeCenter = Node(front.CenterX, front.CenterY);
+                CircleConstruction holeCircle = new(document)
+                {
+                    Layer = nodeLayer,
+                    Page = page,
+                };
+                holeCircle.SetCenterAndRadius(holeCenter, radius);
+
+                //45° — наклон размерной линии, DimensionOffset — вынос числа за окружность
+                double angle = Math.PI / 4;
+                CircularDimension holeDim = new(document) { Page = page };
+                holeDim.SetDiametral(holeCircle, DiametralDimensionType.Normal, null, angle, DimensionOffset);
+                holeDim.ScaleFactorType = DimensionScaleFactorType.Custom;
+                holeDim.ScaleFactor = 1 / layout.Scale;
+            }
+
+            document.EndChanges();
+        }
+
+        // Углы детали на листе: от центра габаритного прямоугольника вида откладываем половину размера детали в масштабе листа
+        private static (double Left, double Right, double Bottom, double Top, double CenterX, double CenterY) PartCorners(
+            TFlex.Drawing.Rectangle viewRect, double modelWidth, double modelHeight, double scale)
+        {
+            double centerX = viewRect.Left + viewRect.Width / 2;
+            double centerY = viewRect.Bottom + viewRect.Height / 2;
+            double halfWidth = modelWidth * scale / 2;
+            double halfHeight = modelHeight * scale / 2;
+
+            return (centerX - halfWidth, centerX + halfWidth, centerY - halfHeight, centerY + halfHeight, centerX, centerY);
+        }
+
+        // Линейный размер между двумя узлами с учётом масштаба вида
+        private static LinearDimension AddLinearDimension(Document document, Page page, Node startNode, Node endNode,
+            DimensionAlignType align, double offset, double scale)
+        {
+            LinearDimension dimension = new(document) { Page = page };
+            dimension.SetTwoNodes(startNode, endNode, align);
+            dimension.SetOffsets(null, offset, null, 0, null, 0);
+
+            //узлы стоят в мм листа, поэтому возвращаем значение к натуральному
+            dimension.ScaleFactorType = DimensionScaleFactorType.Custom;
+            dimension.ScaleFactor = 1 / scale;
+            return dimension;
+        }
+
         // Вставляем форматку с основной надписью и возвращаем её фрагмент
         private static Fragment AddFirstSheetStamp(Document document)
         {
