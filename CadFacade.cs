@@ -22,6 +22,14 @@ namespace TFlexApp
             (0.02, "1:50"), (1.0 / 75, "1:75"), (0.01, "1:100")
         ];
 
+        // Результат размещения проекций: масштаб и габариты видов на листе
+        private sealed record ProjectionsLayout(
+            double Scale,
+            string ScaleText,
+            TFlex.Drawing.Rectangle FrontRect,
+            TFlex.Drawing.Rectangle LeftRect,
+            TFlex.Drawing.Rectangle TopRect);
+
         private readonly TFlex.Control _tfControl;
 
         public CadFacade(TFlex.Control tfControl) => _tfControl = tfControl;
@@ -35,9 +43,10 @@ namespace TFlexApp
             // Строим 3D-модель детали
             ThickenExtrusion part = Build3DModel(document, model);
 
-            // Добавляем на первый лист стандартные проекции
-            Page page= document.ActivePage;
-            string scaleText = AddStandardProjections(document, page, part);
+            // Добавляем на первый лист стандартные проекции и размеры
+            Page page = document.ActivePage;
+            var layout = AddStandardProjections(document, page, part);
+            string scaleText = layout.ScaleText;
 
             // Добавляем форматку с основной надписью на первый лист, заполняем её и устанавливаем масштаб
             Fragment firstStamp = AddFirstSheetStamp(document);
@@ -98,48 +107,8 @@ namespace TFlexApp
             document.EndChanges();
             return part;
         }
-
-        // Вставляем форматку с основной надписью и возвращаем её фрагмент
-        private static Fragment AddFirstSheetStamp(Document document)
-        {
-            document.BeginChanges("Добавление форматки на первый лист");
-            Fragment firstSheetStamp = new(document, FirstSheetStampPath);
-            document.EndChanges();
-            return firstSheetStamp;
-        }
-
-        // Записываем масштаб в основную надпись
-        private static void SetStampScale(Document document, Fragment stamp, string scaleText)
-        {
-            document.BeginChanges("Масштаб в основной надписи");
-            SetStampVariable(stamp, "$maschtab", scaleText);
-            document.EndChanges();
-        }
-
-        // Заполняем основную надпись: обозначение и наименование детали
-        private static void FillStamp(Document document, Fragment stamp, Model model)
-        {
-            document.BeginChanges("Заполнение основной надписи");
-            SetStampVariable(stamp, "$oboznach", model.Designation);
-            SetStampVariable(stamp, "$naimen1", model.PartName);
-            document.EndChanges();
-        }
-
-        // Присваиваем текстовое значение внешней переменной форматки
-        private static void SetStampVariable(Fragment stamp, string name, string value)
-        {
-            foreach (FragmentVariableValue variable in stamp.GetVariables())
-            {
-                if (string.Equals(variable.Name, name, StringComparison.OrdinalIgnoreCase))
-                {
-                    variable.TextValue = value;
-                    return;
-                }
-            }
-        }
-
-        // Добавляем стандартные проекции на чертеж и возвращаем применённый масштаб
-        private static string AddStandardProjections(Document document, Page page, ThickenExtrusion part)
+        // Добавляем стандартные проекции на чертеж и возвращаем масштаб с точками привязки видов
+        private static ProjectionsLayout AddStandardProjections(Document document, Page page, ThickenExtrusion part)
         {
             //доступная область листа (лист начинается в 0,0)
             var pageRect = page.Rectangle;
@@ -184,7 +153,12 @@ namespace TFlexApp
             MoveProjection(projectionTop, topRect, frontLeft, blockY);
             document.EndChanges();
 
-            return scale.Text;
+            //габариты после перемещения — фактические координаты видов на листе
+            return new ProjectionsLayout(
+                scale.Value, scale.Text,
+                projectionFront.BoundRect, 
+                projectionLeft.BoundRect, 
+                projectionTop.BoundRect);
         }
 
         // Подбираем крупнейший масштаб из ряда ГОСТ, при котором виды влезают в область
@@ -215,13 +189,50 @@ namespace TFlexApp
             document.EndChanges();
             return projection;
         }
-
         // Смещаем проекцию так, чтобы её левый нижний угол попал в заданную точку
         private static void MoveProjection(SimpleDrawingProjection projection, TFlex.Drawing.Rectangle currentRect,
             double targetLeft, double targetBottom)
         {
             //точка привязки была в (0,0), поэтому текущий Left/Bottom — это смещение габаритов от привязки
             projection.SetTiePoint(targetLeft - currentRect.Left, targetBottom - currentRect.Bottom);
+        }
+        // Вставляем форматку с основной надписью и возвращаем её фрагмент
+        private static Fragment AddFirstSheetStamp(Document document)
+        {
+            document.BeginChanges("Добавление форматки на первый лист");
+            Fragment firstSheetStamp = new(document, FirstSheetStampPath);
+            document.EndChanges();
+            return firstSheetStamp;
+        }
+
+        // Записываем масштаб в основную надпись
+        private static void SetStampScale(Document document, Fragment stamp, string scaleText)
+        {
+            document.BeginChanges("Масштаб в основной надписи");
+            SetStampVariable(stamp, "$maschtab", scaleText);
+            document.EndChanges();
+        }
+
+        // Заполняем основную надпись: обозначение и наименование детали
+        private static void FillStamp(Document document, Fragment stamp, Model model)
+        {
+            document.BeginChanges("Заполнение основной надписи");
+            SetStampVariable(stamp, "$oboznach", model.Designation);
+            SetStampVariable(stamp, "$naimen1", model.PartName);
+            document.EndChanges();
+        }
+
+        // Присваиваем текстовое значение внешней переменной форматки
+        private static void SetStampVariable(Fragment stamp, string name, string value)
+        {
+            foreach (FragmentVariableValue variable in stamp.GetVariables())
+            {
+                if (string.Equals(variable.Name, name, StringComparison.OrdinalIgnoreCase))
+                {
+                    variable.TextValue = value;
+                    return;
+                }
+            }
         }
 
         // Привязываем документ к TFlex.Control для отображения

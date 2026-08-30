@@ -142,6 +142,9 @@ namespace TFlexApp
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(690, 650);
+            FormBorderStyle = FormBorderStyle.FixedSingle;
+            MaximizeBox = false;
+            StartPosition = FormStartPosition.CenterScreen;
             Controls.Add(buttonRun);
             Controls.Add(LabelHasHole);
             Controls.Add(LabelHoleDiameter);
