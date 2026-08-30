@@ -9,7 +9,6 @@ namespace TFlexApp
     {
         //форматка с основной надписью (первый лист, ГОСТ 2.104-68) относительно папки Program
         private const string FirstSheetStampPath = @"..\Библиотеки\Служебные\Форматки\Конструкторский чертеж. Первый лист. ГОСТ 2.104-68.grb";
-        private const string SubsequentSheetStampPath = @"..\Библиотеки\Служебные\Форматки\Конструкторский чертеж. Последующие листы. ГОСТ 2.104-2006.grb";
         private const double Margin = 25;  //отступ от границ листа
         private const double Gap = 20;     //зазор между проекциями
 
@@ -27,7 +26,7 @@ namespace TFlexApp
 
         public CadFacade(TFlex.Control tfControl) => _tfControl = tfControl;
 
-        // Создаём документ: 3D-модель, штамп, стандартные проекции
+        // Создаём 3D-модель, стандартные проекции и заполняемая основную надпись
         public void CreatePartDrawing(Model model)
         {
             var document = TFlex.Application.NewDocument(true)
@@ -36,27 +35,16 @@ namespace TFlexApp
             // Строим 3D-модель детали
             ThickenExtrusion part = Build3DModel(document, model);
 
-            // Добавляем второй лист и на нём стандартные проекции
-            Page secondPage = AddPage(document);
-            string scaleText = AddStandardProjections(document, secondPage, part);
+            // Добавляем на первый лист стандартные проекции
+            Page page= document.ActivePage;
+            string scaleText = AddStandardProjections(document, page, part);
 
             // Добавляем форматку с основной надписью на первый лист, заполняем её и устанавливаем масштаб
             Fragment firstStamp = AddFirstSheetStamp(document);
             SetStampScale(document, firstStamp, scaleText);
             FillStamp(document, firstStamp, model);
 
-            // Добавляем форматку на второй лист
-            Fragment subsequentStamp = AddSubsequentSheetStamp(document, secondPage);
-
             ShowDocument(document);
-        }
-
-        private static Page AddPage(Document document)
-        {
-            document.BeginChanges("Добавление листа");
-            Page page = new(document);
-            document.EndChanges();
-            return page;
         }
 
         // Строим 3D-модель: выдавливание прямоугольного профиля с опциональным отверстием
@@ -64,14 +52,17 @@ namespace TFlexApp
         {
             document.BeginChanges("Операция выталкивания");
 
+            //погашенный слой: эскиз остаётся в модели, но не отображается на листе
+            Layer sketchLayer = new(document) { Name = "Эскиз", Hidden = true };
+
             //создание узлов (углов прямоугольника)
-            FreeNode n1 = new(document, 0, 0);
-            FreeNode n2 = new(document, model.Length, 0);
-            FreeNode n3 = new(document, model.Length, model.Height);
-            FreeNode n4 = new(document, 0, model.Height);
+            FreeNode n1 = new(document, 0, 0) { Layer = sketchLayer };
+            FreeNode n2 = new(document, model.Length, 0) { Layer = sketchLayer };
+            FreeNode n3 = new(document, model.Length, model.Height) { Layer = sketchLayer };
+            FreeNode n4 = new(document, 0, model.Height) { Layer = sketchLayer };
 
             //создание области и добавление на неё контуров для выдавливания
-            Area area = new(document);
+            Area area = new(document) { Layer = sketchLayer };
             Contour contour = area.AppendContour();
 
             //добавление сегментов в контур
@@ -82,8 +73,8 @@ namespace TFlexApp
 
             if (model.HasHole)
             {
-                FreeNode center = new(document, model.Length / 2, model.Height / 2);
-                CircleConstruction circle = new(document);
+                FreeNode center = new(document, model.Length / 2, model.Height / 2) { Layer = sketchLayer };
+                CircleConstruction circle = new(document) { Layer = sketchLayer };
                 circle.SetCenterAndRadius(center, model.HoleDiameter / 2);
 
                 Contour holeContour = area.AppendContour();
@@ -115,14 +106,6 @@ namespace TFlexApp
             Fragment firstSheetStamp = new(document, FirstSheetStampPath);
             document.EndChanges();
             return firstSheetStamp;
-        }
-
-        private static Fragment AddSubsequentSheetStamp(Document document, Page secondPage)
-        {
-            document.BeginChanges("Добавление форматки на последующие листы");
-            Fragment subsequentSheetStamp = new(document, SubsequentSheetStampPath) { Page = secondPage };
-            document.EndChanges();
-            return subsequentSheetStamp;
         }
 
         // Записываем масштаб в основную надпись

@@ -7,7 +7,7 @@ namespace TFlexApp
     public interface ICadFacade
     {
         /// <summary>
-        /// Создаёт документ T-Flex: 3D-модель, штамп, стандартные проекции.
+        /// Создаёт документ 3D-модель, стандартные проекции с размерами и заполняемую основную надпись.
         /// </summary>
         void CreatePartDrawing(Model model);
     }
