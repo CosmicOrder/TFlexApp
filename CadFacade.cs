@@ -239,10 +239,14 @@ namespace TFlexApp
 
                 //45° — наклон размерной линии, DimensionOffset — вынос числа за окружность
                 double angle = Math.PI / 4;
-                CircularDimension holeDim = new(document) { Page = page };
-                holeDim.SetDiametral(holeCircle, DiametralDimensionType.Normal, null, angle, DimensionOffset);
-                holeDim.ScaleFactorType = DimensionScaleFactorType.Custom;
-                holeDim.ScaleFactor = 1 / layout.Scale;
+                CircularDimension holeDim = new(document) 
+                { 
+                    Page = page,
+                    LeaderDirection = DimensionLeaderDirection.Left,
+                    ScaleFactorType = DimensionScaleFactorType.Custom,
+                    ScaleFactor = 1 / layout.Scale,
+                };
+                holeDim.SetDiametral(holeCircle, DiametralDimensionType.Normal, null, angle, DimensionOffset);                
             }
 
             document.EndChanges();
