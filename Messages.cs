@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -15,6 +15,8 @@ namespace TFlexApp
         public const string ErrHoleDiameterRequired = "Укажите диаметр отверстия!";
         public const string ErrHoleDiameterMustBePositive = "Диаметр отверстия должен быть положительным числом!";
         public const string ErrHoleDiameterExceedsLimit = "Диаметр ({0}) слишком велик! Максимум: {1:F2}";
+        // Ошибки CAD
+        public const string ErrDocumentCreation = "Не удалось создать документ T-Flex CAD.";
         // Успешные операции
         public const string SuccessBuildMessage = "Готово!\nОбозначение: {0}\nНаименование: {1}";
         // Заголовки диалоговых окон

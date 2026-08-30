@@ -39,7 +39,7 @@ namespace TFlexApp
         public void CreatePartDrawing(Model model)
         {
             var document = TFlex.Application.NewDocument(true)
-                ?? throw new InvalidOperationException("Не удалось создать документ T-Flex CAD.");
+                ?? throw new InvalidOperationException(Messages.ErrDocumentCreation);
 
             // Строим 3D-модель детали
             ThickenExtrusion part = Build3DModel(document, model);
@@ -165,7 +165,7 @@ namespace TFlexApp
         }
 
         // Подбираем крупнейший масштаб из ряда ГОСТ, при котором виды влезают в область
-        private static (double Value, string Text) SelectStandardScale(double modelWidth, double modelHeight,
+        internal static (double Value, string Text) SelectStandardScale(double modelWidth, double modelHeight,
             double availableWidth, double availableHeight)
         {
             double required = Math.Min(availableWidth / modelWidth, availableHeight / modelHeight);
@@ -253,7 +253,7 @@ namespace TFlexApp
         }
 
         // Углы детали на листе: от центра габаритного прямоугольника вида откладываем половину размера детали в масштабе листа
-        private static (double Left, double Right, double Bottom, double Top, double CenterX, double CenterY) PartCorners(
+        internal static (double Left, double Right, double Bottom, double Top, double CenterX, double CenterY) PartCorners(
             TFlex.Drawing.Rectangle viewRect, double modelWidth, double modelHeight, double scale)
         {
             double centerX = viewRect.Left + viewRect.Width / 2;
