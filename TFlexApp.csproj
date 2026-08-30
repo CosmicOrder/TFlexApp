@@ -27,5 +27,11 @@
 		<InternalsVisibleTo Include="TFlexApp.Tests" />
 	</ItemGroup>
 
+	<ItemGroup>
+		<Compile Remove="TFlexApp.Tests\**" />
+		<None Remove="TFlexApp.Tests\**" />
+		<EmbeddedResource Remove="TFlexApp.Tests\**" />
+	</ItemGroup>
+
 </Project>
 
