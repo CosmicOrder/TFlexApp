@@ -8,7 +8,8 @@ namespace TFlexApp
     public class CadFacade : ICadFacade
     {
         //форматка с основной надписью (первый лист, ГОСТ 2.104-68) относительно папки Program
-        private const string StampPath = @"..\Библиотеки\Служебные\Форматки\Конструкторский чертеж. Первый лист. ГОСТ 2.104-68.grb";
+        private const string FirstSheetStampPath = @"..\Библиотеки\Служебные\Форматки\Конструкторский чертеж. Первый лист. ГОСТ 2.104-68.grb";
+        private const string SubsequentSheetStampPath = @"..\Библиотеки\Служебные\Форматки\Конструкторский чертеж. Последующие листы. ГОСТ 2.104-2006.grb";
         private const double Margin = 25;  //отступ от границ листа
         private const double Gap = 20;     //зазор между проекциями
 
@@ -29,16 +30,33 @@ namespace TFlexApp
         // Создаём документ: 3D-модель, штамп, стандартные проекции
         public void CreatePartDrawing(Model model)
         {
-            var document = TFlex.Application.NewDocument(true) 
+            var document = TFlex.Application.NewDocument(true)
                 ?? throw new InvalidOperationException("Не удалось создать документ T-Flex CAD.");
 
+            // Строим 3D-модель детали
             ThickenExtrusion part = Build3DModel(document, model);
-            Page page = document.ActivePage;
-            Fragment stamp = AddStamp(document, model);
-            string scaleText = AddStandardProjections(document, page, part);
-            SetStampScale(document, stamp, scaleText);
+
+            // Добавляем второй лист и на нём стандартные проекции
+            Page secondPage = AddPage(document);
+            string scaleText = AddStandardProjections(document, secondPage, part);
+
+            // Добавляем форматку с основной надписью на первый лист, заполняем её и устанавливаем масштаб
+            Fragment firstStamp = AddFirstSheetStamp(document);
+            SetStampScale(document, firstStamp, scaleText);
+            FillStamp(document, firstStamp, model);
+
+            // Добавляем форматку на второй лист
+            Fragment subsequentStamp = AddSubsequentSheetStamp(document, secondPage);
 
             ShowDocument(document);
+        }
+
+        private static Page AddPage(Document document)
+        {
+            document.BeginChanges("Добавление листа");
+            Page page = new(document);
+            document.EndChanges();
+            return page;
         }
 
         // Строим 3D-модель: выдавливание прямоугольного профиля с опциональным отверстием
@@ -91,13 +109,20 @@ namespace TFlexApp
         }
 
         // Вставляем форматку с основной надписью и возвращаем её фрагмент
-        private static Fragment AddStamp(Document document, Model model)
+        private static Fragment AddFirstSheetStamp(Document document)
         {
-            document.BeginChanges("Добавление форматки");
-            Fragment stamp = new(document, StampPath);
-            FillStamp(stamp, model);
+            document.BeginChanges("Добавление форматки на первый лист");
+            Fragment firstSheetStamp = new(document, FirstSheetStampPath);
             document.EndChanges();
-            return stamp;
+            return firstSheetStamp;
+        }
+
+        private static Fragment AddSubsequentSheetStamp(Document document, Page secondPage)
+        {
+            document.BeginChanges("Добавление форматки на последующие листы");
+            Fragment subsequentSheetStamp = new(document, SubsequentSheetStampPath) { Page = secondPage };
+            document.EndChanges();
+            return subsequentSheetStamp;
         }
 
         // Записываем масштаб в основную надпись
@@ -109,10 +134,12 @@ namespace TFlexApp
         }
 
         // Заполняем основную надпись: обозначение и наименование детали
-        private static void FillStamp(Fragment stamp, Model model)
+        private static void FillStamp(Document document, Fragment stamp, Model model)
         {
+            document.BeginChanges("Заполнение основной надписи");
             SetStampVariable(stamp, "$oboznach", model.Designation);
             SetStampVariable(stamp, "$naimen1", model.PartName);
+            document.EndChanges();
         }
 
         // Присваиваем текстовое значение внешней переменной форматки
