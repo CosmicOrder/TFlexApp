@@ -57,14 +57,5 @@ namespace TFlexApp
             RunRequested.Invoke(this, EventArgs.Empty); // Испускание события RunRequested при нажатии кнопки
         }
 
-        private void TextLength_TextChanged(object sender, EventArgs e)
-        {
-
-        }
-
-        private void LabelHoleDiameter_Click(object sender, EventArgs e)
-        {
-
-        }
     }
 }

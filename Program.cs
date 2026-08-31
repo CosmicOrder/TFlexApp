@@ -11,7 +11,8 @@ namespace TFlexApp
             AppDomain.CurrentDomain.UnhandledException += (sender, e) =>
             {
                 var ex = e.ExceptionObject as Exception;
-                System.IO.File.AppendAllText("crash.log",
+                System.IO.File.AppendAllText(
+                    System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "crash.log"),
                     $"[{DateTime.Now}] UnhandledException (IsTerminating={e.IsTerminating}):\n{ex}\n\n");
                 System.Windows.Forms.MessageBox.Show(
                     "Необработанное исключение:\n\n" + (ex?.ToString() ?? e.ExceptionObject?.ToString() ?? "null"),
@@ -25,14 +26,16 @@ namespace TFlexApp
             }
             catch (AccessViolationException ex)
             {
-                System.IO.File.AppendAllText("crash.log",
+                System.IO.File.AppendAllText(
+                    System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "crash.log"),
                     $"[{DateTime.Now}] AccessViolationException:\n{ex}\n\n");
                 System.Windows.Forms.MessageBox.Show("AccessViolation (нативный крах T-Flex):\n\n" + ex,
                     "Крах", System.Windows.Forms.MessageBoxButtons.OK, System.Windows.Forms.MessageBoxIcon.Error);
             }
             catch (Exception ex)
             {
-                System.IO.File.AppendAllText("crash.log",
+                System.IO.File.AppendAllText(
+                    System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "crash.log"),
                     $"[{DateTime.Now}] {ex.GetType().Name}:\n{ex}\n\n");
                 System.Windows.Forms.MessageBox.Show(ex.ToString(), "Крах",
                     System.Windows.Forms.MessageBoxButtons.OK, System.Windows.Forms.MessageBoxIcon.Error);

@@ -14,11 +14,11 @@
 
 	<ItemGroup>
 		<Reference Include="TFlexAPI">
-			<HintPath>C:\Program Files\T-FLEX CAD 17\Program\TFlexAPI.dll</HintPath>
+			<HintPath>$(TFLEX_PATH)\TFlexAPI.dll</HintPath>
 			<Private>false</Private>
 		</Reference>
 		<Reference Include="TFlexAPI3D">
-			<HintPath>C:\Program Files\T-FLEX CAD 17\Program\TFlexAPI3D.dll</HintPath>
+			<HintPath>$(TFLEX_PATH)\TFlexAPI3D.dll</HintPath>
 			<Private>false</Private>
 		</Reference>
 	</ItemGroup>

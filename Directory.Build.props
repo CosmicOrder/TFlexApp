@@ -1,0 +1,5 @@
+<Project>
+  <PropertyGroup>
+    <TFLEX_PATH Condition="'$(TFLEX_PATH)' == ''">C:\Program Files\T-FLEX CAD 17\Program</TFLEX_PATH>
+  </PropertyGroup>
+</Project>

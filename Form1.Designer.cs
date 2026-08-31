@@ -47,7 +47,6 @@ namespace TFlexApp
             TextLength.Name = "TextLength";
             TextLength.Size = new Size(100, 23);
             TextLength.TabIndex = 0;
-            TextLength.TextChanged += TextLength_TextChanged;
             // 
             // TextHeight
             // 
@@ -116,7 +115,6 @@ namespace TFlexApp
             LabelHoleDiameter.Size = new Size(116, 15);
             LabelHoleDiameter.TabIndex = 8;
             LabelHoleDiameter.Text = "Диаметр отверстия:";
-            LabelHoleDiameter.Click += LabelHoleDiameter_Click;
             // 
             // LabelHasHole
             // 

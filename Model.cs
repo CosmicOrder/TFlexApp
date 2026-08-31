@@ -1,11 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
 namespace TFlexApp
 {
     public class Model
     {
+        private const string DesignationPrefix = "АБВГ";
+
         // Свойства для хранения габаритов детали
         public double Length { get; set; }
         public double Height { get; set; }
@@ -19,7 +17,7 @@ namespace TFlexApp
             get
             {
                 string holePart = HasHole ? $"-D{HoleDiameter}" : "";
-                return $"АБВГ-{Length}-{Height}-{Thickness}{holePart}";
+                return $"{DesignationPrefix}-{Length}-{Height}-{Thickness}{holePart}";
             }
         }
         // Метод для генерации наименования детали

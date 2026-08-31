@@ -100,8 +100,11 @@ namespace TFlexApp
 
                 return System.Reflection.Assembly.LoadFrom(fileName);
             }
-            catch
+            catch (Exception ex)
             {
+                System.IO.File.AppendAllText(
+                    System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "crash.log"),
+                    $"[{DateTime.Now}] AssemblyResolve ({args.Name}):\n{ex}\n\n");
                 return null;
             }
         }
