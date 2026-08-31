@@ -15,13 +15,14 @@ namespace TFlexApp
 
         //ряд масштабов по ГОСТ 2.302-68, от крупного к мелкому
         private static readonly (double Value, string Text)[] StandardScales =
-        [
+        new[]
+        {
             (100, "100:1"), (50, "50:1"), (40, "40:1"), (20, "20:1"), (10, "10:1"),
             (5, "5:1"), (4, "4:1"), (2.5, "2.5:1"), (2, "2:1"), (1, "1:1"),
             (0.5, "1:2"), (0.4, "1:2.5"), (0.25, "1:4"), (0.2, "1:5"), (0.1, "1:10"),
             (1.0 / 15, "1:15"), (0.05, "1:20"), (0.04, "1:25"), (0.025, "1:40"),
             (0.02, "1:50"), (1.0 / 75, "1:75"), (0.01, "1:100")
-        ];
+        };
 
         // Результат размещения проекций: масштаб и габариты видов на листе
         private sealed record ProjectionsLayout(
@@ -177,7 +178,7 @@ namespace TFlexApp
                     return scale;
                 }
             }
-            return StandardScales[^1];
+            return StandardScales[StandardScales.Length - 1];
         }
 
         // Создаём проекцию заданного типа в нулевой точке привязки
@@ -239,10 +240,11 @@ namespace TFlexApp
 
                 //45° — наклон размерной линии, DimensionOffset — вынос числа за окружность
                 double angle = Math.PI / 4;
-                CircularDimension holeDim = new(document) 
-                { 
+                CircularDimension holeDim = new(document)
+                {
                     Page = page,
                     LeaderDirection = DimensionLeaderDirection.Left,
+                    PrefixSymbol = DimensionPrefixSymbol.Diameter,
                     ScaleFactorType = DimensionScaleFactorType.Custom,
                     ScaleFactor = 1 / layout.Scale,
                 };
