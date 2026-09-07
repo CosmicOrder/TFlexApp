@@ -31,6 +31,9 @@
 		<Compile Remove="TFlexApp.Tests\**" />
 		<None Remove="TFlexApp.Tests\**" />
 		<EmbeddedResource Remove="TFlexApp.Tests\**" />
+		<Compile Remove="TFlexPlugin\**" />
+		<None Remove="TFlexPlugin\**" />
+		<EmbeddedResource Remove="TFlexPlugin\**" />
 	</ItemGroup>
 
 </Project>
